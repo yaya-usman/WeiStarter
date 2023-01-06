@@ -2,19 +2,20 @@
 
 pragma solidity >=0.7.0 <0.9.0;
 
-contract campaignFactory{
-    address[] private deployedCampaigns;
 
-    function createCampaign(uint minimum, string memory _title, string memory _story,
+contract campaignFactory{
+    Campaign[] private deployedCampaigns;
+
+    function createCampaign(string memory _title, string memory _story,
      uint _target, uint _deadline, string memory _image) public{
-        address newCampaign = address(new Campaign(minimum, 
+        Campaign newCampaign = new Campaign(
                                 msg.sender, _title, _story,
-                                 _target, _deadline, _image));
+                                 _target, _deadline, _image);
         
         deployedCampaigns.push(newCampaign);
     }
 
-    function getDeployedCampaigns() public view returns (address[] memory){
+    function getDeployedCampaigns() public view returns (Campaign[] memory){
         return deployedCampaigns;
     }
 }
@@ -40,21 +41,19 @@ contract Campaign {
     uint private deadline;
     uint private amountCollected;
     string private image;
-    uint private minDonation;
     uint[] private donations;
     address[] private donators;
     mapping(address => bool) private donatorsMap;
     uint private donatorsCount;
  
 
-    constructor(uint minimum, address _owner, string memory _title, string memory _story,
+    constructor(address _owner, string memory _title, string memory _story,
      uint _target, uint _deadline, string memory _image){
          
-         require(_deadline < block.timestamp, 
+         require(deadline < block.timestamp, 
          "The deadline should be a date in the future.");
 
         owner = _owner;
-        minDonation = minimum;
         title = _title;
         story = _story;
         target = _target;
@@ -70,8 +69,6 @@ contract Campaign {
 
     function donate() public payable{
         uint amount = msg.value;
-
-        require(amount >= minDonation);
 
         donatorsMap[msg.sender] = true;
         donators.push(msg.sender);
@@ -116,10 +113,15 @@ contract Campaign {
         request.complete = true;
     }
 
-    function getContractSummary() public view returns (address,uint, uint, uint, address[] memory, uint[] memory ){
+    function getContractSummary() public view returns (address,string memory,string memory,uint, uint, string memory,
+     uint,uint, address[] memory, uint[] memory ){
         return (
             owner,
-            minDonation,
+            title,
+            story,
+            target,
+            deadline,
+            image,
             amountCollected,
             donatorsCount,
             donators,
