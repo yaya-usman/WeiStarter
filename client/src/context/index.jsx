@@ -6,6 +6,7 @@ import {
   useMetamask,
   useContractWrite,
   useDisconnect,
+  useStorageUpload,
 } from "@thirdweb-dev/react";
 import { ethers } from "ethers";
 
@@ -13,7 +14,7 @@ const StateContext = createContext();
 
 export const StateContextProvider = ({ children }) => {
   const { contract } = useContract(
-    "0x27b0F11E56B6e0888d501a6Dc6e52fbA79b045Ea"
+    "0x8D436Ebb795d3fd16c6DB4e017612c2C8dA34534"
   );
   const { mutateAsync: createCampaign } = useContractWrite(
     contract,
@@ -23,6 +24,13 @@ export const StateContextProvider = ({ children }) => {
     contract,
     "createRequest"
   );
+
+  const { mutateAsync: updateCampaign } = useContractWrite(
+    contract,
+    "updateCampaign"
+  );
+
+  const { mutateAsync: upload } = useStorageUpload();
 
   const address = useAddress();
   const connect = useMetamask();
@@ -37,6 +45,7 @@ export const StateContextProvider = ({ children }) => {
         form.target,
         new Date(form.deadline).getTime(), // deadline,
         form.image,
+        form.vidThumbnail
       ]);
 
       console.log("contract call success", data);
@@ -58,6 +67,7 @@ export const StateContextProvider = ({ children }) => {
         campaign.amountCollected.toString()
       ),
       image: campaign.image,
+      vidThumbnail: campaign.vidThumbnail,
       pId: i,
     }));
 
@@ -130,6 +140,23 @@ export const StateContextProvider = ({ children }) => {
     }
   };
 
+  const EditCampaign = async (form) => {
+    try {
+      const data = await updateCampaign([
+        form.pId, // owner
+        form.title, // title
+        form.description, // description
+        form.target,
+        new Date(form.deadline).getTime(), // deadline,
+        form.image,
+      ]);
+
+      console.log("contract call success", data);
+    } catch (error) {
+      alert("contract call failure", error);
+    }
+  };
+
   const getRequests = async (pId) => {
     const requests = await contract.call("getRequests", pId);
 
@@ -175,6 +202,8 @@ export const StateContextProvider = ({ children }) => {
         finalizeRequest,
         getCreatorCampaigns,
         disconnect,
+        upload,
+        updateCampaign: EditCampaign
       }}
     >
       {children}

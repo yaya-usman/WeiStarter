@@ -11,6 +11,7 @@ const FundCard = ({
   deadline,
   amountCollected,
   image,
+  vidThumbnail,
   handleClick,
 }) => {
   const remainingDays = daysLeft(deadline);
@@ -20,11 +21,19 @@ const FundCard = ({
       className="sm:w-[288px] w-full rounded-[15px] bg-[#1c1c24] cursor-pointer"
       onClick={handleClick}
     >
-      <img
-        src={image}
-        alt="fund"
-        className="w-full h-[158px] object-cover rounded-[15px]"
-      />
+      {vidThumbnail ? (
+        <img
+          src={vidThumbnail}
+          alt="fund"
+          className="w-full h-[158px] object-cover rounded-[15px]"
+        />
+      ) : (
+        <img
+          src={image}
+          alt="fund"
+          className="w-full h-[158px] object-cover rounded-[15px]"
+        />
+      )}
 
       <div className="flex flex-col p-4">
         <div className="flex flex-row items-center mb-[18px]">
@@ -67,7 +76,7 @@ const FundCard = ({
                 </p>
               </>
             ) : (
-              <p className="mt-[3px] font-epilogue font-normal text-[12px] leading-[18px] text-[#808191] sm:max-w-[120px] truncate">
+              <p className="mt-[3px] font-epilogue font-normal text-[12px] leading-[18px] text-[#ca1010] sm:max-w-[120px] truncate">
                 Expired
               </p>
             )}

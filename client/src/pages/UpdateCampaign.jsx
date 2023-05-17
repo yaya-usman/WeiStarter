@@ -3,20 +3,24 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { ethers } from "ethers";
 
 import { useStateContext } from "../context";
+import { money } from "../assets";
 import { CustomButton, FormField, Loader } from "../components";
 
-const RequestForm = () => {
+const updateCampaign = () => {
   const navigate = useNavigate();
   const { state } = useLocation();
   const [isLoading, setIsLoading] = useState(false);
   const [file, setFile] = useState();
-  const { createRequest, upload } = useStateContext();
+
+  const { updateCampaign, upload } = useStateContext();
+
   const [form, setForm] = useState({
-    title: "",
-    description: "",
-    amount: "",
-    recipient: "",
-    imageUrl: "",
+    name: state.name,
+    title: state.title,
+    description: state.description,
+    target: state.target,
+    deadline: state.deadline,
+    image: state.image,
   });
 
   const handleFormFieldChange = (fieldName, e) => {
@@ -36,14 +40,20 @@ const RequestForm = () => {
       },
     });
 
-    await createRequest({
+    await updateCampaign({
       ...form,
-      amount: ethers.utils.parseUnits(form.amount, 18),
       pId: state.pId,
-      imageUrl: uploadUrl
+      target: ethers.utils.parseUnits(form.target, 18),
+      image: uploadUrl[0]
     });
     setIsLoading(false);
     navigate("/");
+  };
+
+  const handleFile = (e) => {
+    if (e.target.files) {
+      setFile(e.target.files[0]);
+    }
   };
 
   return (
@@ -51,7 +61,7 @@ const RequestForm = () => {
       {isLoading && <Loader />}
       <div className="flex justify-center items-center p-[16px] sm:min-w-[380px] bg-[#3a3a43] rounded-[10px]">
         <h1 className="font-epilogue font-bold sm:text-[25px] text-[18px] leading-[38px] text-white">
-          Create a Request
+          Start a Campaign
         </h1>
       </div>
 
@@ -61,54 +71,67 @@ const RequestForm = () => {
       >
         <div className="flex flex-wrap gap-[40px]">
           <FormField
-            labelName="Request Title *"
+            labelName="Your Name *"
+            placeholder="John Doe"
+            inputType="text"
+            value={form.name}
+            handleChange={(e) => handleFormFieldChange("name", e)}
+          />
+          <FormField
+            labelName="Campaign Title *"
             placeholder="Write a title"
             inputType="text"
             value={form.title}
             handleChange={(e) => handleFormFieldChange("title", e)}
           />
-          <FormField
-            labelName="Recipient *"
-            placeholder="0xAbyzf..."
-            inputType="text"
-            value={form.recipient}
-            handleChange={(e) => handleFormFieldChange("recipient", e)}
-          />
         </div>
 
         <FormField
-          labelName="Description *"
-          placeholder="Write your description"
+          labelName="Story *"
+          placeholder="Write your story"
           isTextArea
           value={form.description}
           handleChange={(e) => handleFormFieldChange("description", e)}
         />
 
-        <div className="flex">
-          <FormField
-            labelName="Amount Needed *"
-            placeholder="ETH 0.50"
-            inputType="text"
-            value={form.amount}
-            handleChange={(e) => handleFormFieldChange("amount", e)}
+        <div className="w-full flex justify-start items-center p-4 bg-[#8c6dfd] h-[120px] rounded-[10px]">
+          <img
+            src={money}
+            alt="money"
+            className="w-[40px] h-[40px] object-contain"
           />
+          <h4 className="font-epilogue font-bold text-[25px] text-white ml-[20px]">
+            You will get 100% of the raised amount
+          </h4>
         </div>
 
+        <div className="flex flex-wrap gap-[40px]">
+          <FormField
+            labelName="Goal *"
+            placeholder="ETH 0.50"
+            inputType="text"
+            value={form.target}
+            handleChange={(e) => handleFormFieldChange("target", e)}
+          />
+          <FormField
+            labelName="End Date *"
+            placeholder="End Date"
+            inputType="date"
+            value={form.deadline}
+            handleChange={(e) => handleFormFieldChange("deadline", e)}
+          />
+        </div>
         <FormField
-          labelName="Request Sample image/Video *"
-          placeholder="Place image URL of your request"
+          labelName="Campaign image/video *"
+          placeholder="Place image URL of your campaign"
           inputType="file"
-          handleChange={(e) => {
-            if (e.target.files){
-              setFile(e.target.files[0]);
-            }
-          }}
+          handleChange={(e) => handleFile(e)}
         />
 
         <div className="flex justify-center items-center mt-[40px]">
           <CustomButton
             btnType="submit"
-            title="Submit new request"
+            title="Update campaign"
             styles="bg-[#1dc071]"
           />
         </div>
@@ -117,4 +140,4 @@ const RequestForm = () => {
   );
 };
 
-export default RequestForm;
+export default updateCampaign;

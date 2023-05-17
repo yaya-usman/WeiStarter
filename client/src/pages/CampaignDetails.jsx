@@ -1,16 +1,19 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import { useStateContext } from "../context";
 import { CountBox, CustomButton, Loader } from "../components";
 import { calculateBarPercentage, daysLeft } from "../utils";
 import { thirdweb } from "../assets";
+import { MediaRenderer, useResolvedMediaType } from "@thirdweb-dev/react";
 
 const CampaignDetails = () => {
   const { state } = useLocation();
   const navigate = useNavigate();
   const { donate, getDonations, contract, address, getCreatorCampaigns } =
     useStateContext();
+
+  const { url, mimeType } = useResolvedMediaType(`${state.image}`);
 
   const [isLoading, setIsLoading] = useState(false);
   const [amount, setAmount] = useState("");
@@ -51,6 +54,10 @@ const CampaignDetails = () => {
     });
   };
 
+  const handleEditCampaign = () => {
+    navigate(`/update-campaign`, { state });
+  };
+
   return (
     <div>
       {isLoading && <Loader />}
@@ -58,11 +65,25 @@ const CampaignDetails = () => {
       <div className="w-full flex md:flex-row flex-col mt-10 gap-[30px]">
         <div className="flex-1 flex-col">
           <a href={state.image}>
-            <img
-              src={state.image}
-              alt="campaign"
-              className="w-full h-[410px] object-cover rounded-xl"
-            />
+            {mimeType && mimeType.includes("image") && (
+              <img
+                src={url}
+                alt="campaign image"
+                className="w-full h-[410px] object-cover rounded-xl"
+              />
+            )}
+
+            {mimeType && mimeType.includes("video") && (
+              <video  
+                autoPlay={false}
+                alt="campaign video"
+                className="w-full h-[410px] object-cover rounded-xl"
+                controls
+                poster={state.vidThumbnail}
+              >
+                <source src={url} type={mimeType} />
+              </video>
+            )}
           </a>
           <div className="relative w-full h-[5px] bg-[#3a3a43] mt-2">
             <div
@@ -88,19 +109,27 @@ const CampaignDetails = () => {
             value={state.amountCollected}
           />
           <CountBox title="Total Backers" value={donators.length} />
-          <div>
+          <div className="flex flex-col ">
             <CustomButton
               btnType="button"
               title="View Requests"
-              styles="bg-[#8c6dfd]"
+              styles="bg-[#8c6dfd] mb-4"
               handleClick={handleViewRequests}
             />
+            {state.owner == address && (
+              <CustomButton
+                btnType="button"
+                title="Edit Campaign"
+                styles="bg-[#4acd8d]"
+                handleClick={handleEditCampaign}
+              />
+            )}
           </div>
         </div>
       </div>
 
-      <div className="mt-[60px] flex lg:flex-row flex-col gap-5">
-        <div className="flex-[2] flex flex-col gap-[40px]">
+      <div className="mt-[40px] flex lg:flex-row flex-col gap-10">
+        <div className="mt-[-80px] flex-[2] flex flex-col gap-[40px]">
           <div>
             <h4 className="font-epilogue font-semibold text-[18px] text-white uppercase">
               Creator

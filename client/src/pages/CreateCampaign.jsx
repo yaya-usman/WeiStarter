@@ -5,12 +5,14 @@ import { ethers } from "ethers";
 import { useStateContext } from "../context";
 import { money } from "../assets";
 import { CustomButton, FormField, Loader } from "../components";
-import { checkIfImage } from "../utils";
 
 const CreateCampaign = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
-  const { createCampaign } = useStateContext();
+  const [file, setFile] = useState();
+  const [thumbnail, setThumbnail] = useState();
+
+  const { createCampaign, upload } = useStateContext();
 
   const [form, setForm] = useState({
     name: "",
@@ -19,6 +21,7 @@ const CreateCampaign = () => {
     target: "",
     deadline: "",
     image: "",
+    vidThumbnail: "",
   });
 
   const handleFormFieldChange = (fieldName, e) => {
@@ -28,20 +31,26 @@ const CreateCampaign = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    checkIfImage(form.image, async (exists) => {
-      if (exists) {
-        setIsLoading(true);
-        await createCampaign({
-          ...form,
-          target: ethers.utils.parseUnits(form.target, 18),
-        });
-        setIsLoading(false);
-        navigate("/");
-      } else {
-        alert("Provide valid image URL");
-        setForm({ ...form, image: "" });
-      }
+
+    setIsLoading(true);
+
+    const uploadUrl = await upload({
+      data: [file, thumbnail],
+      options: {
+        uploadWithGatewayUrl: true,
+        uploadWithoutDirectory: false,
+      },
     });
+
+
+    await createCampaign({
+      ...form,
+      target: ethers.utils.parseUnits(form.target, 18),
+      image: uploadUrl[0],
+      vidThumbnail: uploadUrl[1],
+    });
+    setIsLoading(false);
+    navigate("/");
   };
 
   return (
@@ -109,13 +118,24 @@ const CreateCampaign = () => {
             handleChange={(e) => handleFormFieldChange("deadline", e)}
           />
         </div>
-
         <FormField
-          labelName="Campaign image *"
-          placeholder="Place image URL of your campaign"
-          inputType="url"
-          value={form.image}
-          handleChange={(e) => handleFormFieldChange("image", e)}
+          labelName="Campaign image/video *"
+          inputType="file"
+          handleChange={(e) => {
+            if (e.target.files) {
+              setFile(e.target.files[0]);
+            }
+          }}
+        />
+        <FormField
+          isRequired={false}
+          labelName="Thumbnail for video (optional) "
+          inputType="file"
+          handleChange={(e) => {
+            if (e.target.files) {
+              setThumbnail(e.target.files[0]);
+            }
+          }}
         />
 
         <div className="flex justify-center items-center mt-[40px]">

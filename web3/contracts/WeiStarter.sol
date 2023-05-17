@@ -25,6 +25,7 @@ contract CrowdFunding{
         uint deadline;
         uint amountCollected;
         string image;
+        string vidThumbnail;
         address[] donators;
         uint[] donations;
         uint donatorsCount;
@@ -38,7 +39,7 @@ contract CrowdFunding{
 
     function createCampaign(address _owner, string memory _title, string memory _description,
      uint _target, uint _deadline,  
-     string memory _image) public returns (uint) {
+     string memory _image, string memory _vidThumbnail) public returns (uint) {
          
         Campaign storage campaign = campaigns.push();
 
@@ -51,6 +52,7 @@ contract CrowdFunding{
         campaign.deadline = _deadline;
         campaign.amountCollected = 0;
         campaign.image = _image;     
+        campaign.vidThumbnail = _vidThumbnail;     
 
         numberOfCampaigns++;
 
@@ -70,6 +72,22 @@ contract CrowdFunding{
     
 
         }
+    
+    function updateCampaign(uint _idx, string memory _title, string memory _description,
+     uint _target, uint _deadline,  
+     string memory _image) public{
+        Campaign storage campaign = campaigns[_idx];
+
+        require(msg.sender ==  campaign.owner);
+
+        campaign.title = _title;
+        campaign.description = _description;
+        campaign.target = _target;
+        campaign.deadline = _deadline;
+        campaign.image = _image;     
+
+    }
+
 
     function getDonators(uint _idx) public view  returns (address[] memory, uint256[] memory) {
         return (campaigns[_idx].donators, campaigns[_idx].donations);
@@ -82,12 +100,13 @@ contract CrowdFunding{
 
      function createRequest(uint _idx, string memory _title, string memory _description, uint _value, string memory _sampleImg, address payable _recipient) public{
         Campaign storage campaign = campaigns[_idx];
-        Request storage newRequest = campaign.requests.push();
 
         require(msg.sender ==  campaign.owner);
         require(msg.sender  != _recipient);
+
+        Request storage newRequest = campaign.requests.push();
+
         require(campaign.amountCollected >= campaign.target);
-        
 
         newRequest.title = _title;
         newRequest.description = _description;
