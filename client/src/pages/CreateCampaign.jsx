@@ -30,8 +30,7 @@ const CreateCampaign = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-
+    
     setIsLoading(true);
 
     const uploadUrl = await upload({
@@ -47,7 +46,7 @@ const CreateCampaign = () => {
       ...form,
       target: ethers.utils.parseUnits(form.target, 18),
       image: uploadUrl[0],
-      vidThumbnail: uploadUrl[1],
+      vidThumbnail: `${form.vidThumbnail.length > 1 ? form.vidThumbnail : ''}`,
     });
     setIsLoading(false);
     navigate("/");

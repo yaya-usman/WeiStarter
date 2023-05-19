@@ -14,7 +14,7 @@ const StateContext = createContext();
 
 export const StateContextProvider = ({ children }) => {
   const { contract } = useContract(
-    "0x8D436Ebb795d3fd16c6DB4e017612c2C8dA34534"
+    "0x2333C680BE570F9Fe0EE931d61B07502993164E3"
   );
   const { mutateAsync: createCampaign } = useContractWrite(
     contract,
@@ -45,7 +45,7 @@ export const StateContextProvider = ({ children }) => {
         form.target,
         new Date(form.deadline).getTime(), // deadline,
         form.image,
-        form.vidThumbnail
+        form.vidThumbnail,
       ]);
 
       console.log("contract call success", data);
@@ -119,6 +119,9 @@ export const StateContextProvider = ({ children }) => {
   };
 
   const publishRequest = async (form) => {
+    const allCampaigns = await getCampaigns();
+    const campaign = allCampaigns[form.pId];
+
     try {
       const data = await createRequest([
         form.pId,
@@ -132,10 +135,15 @@ export const StateContextProvider = ({ children }) => {
     } catch (error) {
       if (form.recipient == address) {
         alert("You can't use your address as the recipient");
-      } else {
+      } else if (
+        parseFloat(campaign.amountCollected) <
+        parseFloat(ethers.utils.formatEther(form.amount.toString()))
+      ) {
         alert(
-          "Ensure the amount requested is <= the amount collected in the campaign so far!"
+          "Amount requested is > the amount collected in the campaign so far!"
         );
+      } else {
+        alert("Transaction Rejected!");
       }
     }
   };
@@ -203,7 +211,7 @@ export const StateContextProvider = ({ children }) => {
         getCreatorCampaigns,
         disconnect,
         upload,
-        updateCampaign: EditCampaign
+        updateCampaign: EditCampaign,
       }}
     >
       {children}

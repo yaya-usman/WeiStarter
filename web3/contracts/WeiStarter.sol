@@ -2,22 +2,19 @@
 
 pragma solidity >=0.7.0 <0.9.0;
 
-
-contract CrowdFunding{
-
-       struct Request{
+contract CrowdFunding {
+    struct Request {
         string title;
         string description;
         uint value;
         address payable recipient;
         bool complete;
-        uint approvalCount; //no of backers of this request 
+        uint approvalCount; //no of backers of this request
         address[] approvers;
-        string sampleImg;     
+        string sampleImg;
     }
 
-
-     struct Campaign{
+    struct Campaign {
         address owner;
         string title;
         string description;
@@ -32,18 +29,24 @@ contract CrowdFunding{
         Request[] requests;
     }
 
- 
     Campaign[] public campaigns;
     uint256 private numberOfCampaigns = 0;
 
-
-    function createCampaign(address _owner, string memory _title, string memory _description,
-     uint _target, uint _deadline,  
-     string memory _image, string memory _vidThumbnail) public returns (uint) {
-         
+    function createCampaign(
+        address _owner,
+        string memory _title,
+        string memory _description,
+        uint _target,
+        uint _deadline,
+        string memory _image,
+        string memory _vidThumbnail
+    ) public returns (uint) {
         Campaign storage campaign = campaigns.push();
 
-        require(campaign.deadline < block.timestamp, "The deadline should be a date in the future.");
+        require(
+            campaign.deadline < block.timestamp,
+            "The deadline should be a date in the future."
+        );
 
         campaign.owner = _owner;
         campaign.title = _title;
@@ -51,45 +54,47 @@ contract CrowdFunding{
         campaign.target = _target;
         campaign.deadline = _deadline;
         campaign.amountCollected = 0;
-        campaign.image = _image;     
-        campaign.vidThumbnail = _vidThumbnail;     
+        campaign.image = _image;
+        campaign.vidThumbnail = _vidThumbnail;
 
         numberOfCampaigns++;
 
-
         return numberOfCampaigns - 1;
-}
+    }
 
-    function donate(uint _idx) public payable{
-            Campaign storage campaign = campaigns[_idx];
-            uint amount = msg.value;
+    function donate(uint _idx) public payable {
+        Campaign storage campaign = campaigns[_idx];
+        uint amount = msg.value;
 
-            campaign.donators.push(msg.sender);
-            campaign.donations.push(amount);
-            campaign.amountCollected = campaign.amountCollected + amount;
+        campaign.donators.push(msg.sender);
+        campaign.donations.push(amount);
+        campaign.amountCollected = campaign.amountCollected + amount;
 
-            campaign.donatorsCount++;
-    
+        campaign.donatorsCount++;
+    }
 
-        }
-    
-    function updateCampaign(uint _idx, string memory _title, string memory _description,
-     uint _target, uint _deadline,  
-     string memory _image) public{
+    function updateCampaign(
+        uint _idx,
+        string memory _title,
+        string memory _description,
+        uint _target,
+        uint _deadline,
+        string memory _image
+    ) public {
         Campaign storage campaign = campaigns[_idx];
 
-        require(msg.sender ==  campaign.owner);
+        require(msg.sender == campaign.owner);
 
         campaign.title = _title;
         campaign.description = _description;
         campaign.target = _target;
         campaign.deadline = _deadline;
-        campaign.image = _image;     
-
+        campaign.image = _image;
     }
 
-
-    function getDonators(uint _idx) public view  returns (address[] memory, uint256[] memory) {
+    function getDonators(
+        uint _idx
+    ) public view returns (address[] memory, uint256[] memory) {
         return (campaigns[_idx].donators, campaigns[_idx].donations);
     }
 
@@ -97,77 +102,77 @@ contract CrowdFunding{
         return campaigns;
     }
 
-
-     function createRequest(uint _idx, string memory _title, string memory _description, uint _value, string memory _sampleImg, address payable _recipient) public{
+    function createRequest(
+        uint _idx,
+        string memory _title,
+        string memory _description,
+        uint _value,
+        string memory _sampleImg,
+        address payable _recipient
+    ) public {
         Campaign storage campaign = campaigns[_idx];
 
-        require(msg.sender ==  campaign.owner);
-        require(msg.sender  != _recipient);
+        require(msg.sender == campaign.owner);
+        require(msg.sender != _recipient);
+
+        require(_value <= campaign.amountCollected);
 
         Request storage newRequest = campaign.requests.push();
-
-        require(campaign.amountCollected >= campaign.target);
 
         newRequest.title = _title;
         newRequest.description = _description;
         newRequest.value = _value;
         newRequest.recipient = _recipient;
         newRequest.sampleImg = _sampleImg;
-        newRequest.approvalCount = 0;       
-        }
+        newRequest.approvalCount = 0;
+    }
 
-
-    function getRequests(uint _idx) public view returns (Request[] memory){
+    function getRequests(uint _idx) public view returns (Request[] memory) {
         Campaign storage campaign = campaigns[_idx];
 
         return campaign.requests;
     }
 
-   
-    function approveRequest(uint _campaignIdx, uint _reqIdx) public{
-
-
+    function approveRequest(uint _campaignIdx, uint _reqIdx) public {
         Campaign storage campaign = campaigns[_campaignIdx];
         Request storage request = campaign.requests[_reqIdx];
 
         require(msg.sender != campaign.owner);
-        
 
         bool hasDonated = false;
         bool hasApproved = false;
 
         //ensuring the person has donated
-        for(uint i=0; i<campaign.donators.length; i++){
-            if(campaign.donators[i] == msg.sender){
+        for (uint i = 0; i < campaign.donators.length; i++) {
+            if (campaign.donators[i] == msg.sender) {
                 hasDonated = true;
             }
         }
         require(hasDonated);
 
         //ensuring no address has voted or approved twice
-          for(uint i=0; i < request.approvers.length; i++){
-            if(request.approvers[i] == msg.sender){
+        for (uint i = 0; i < request.approvers.length; i++) {
+            if (request.approvers[i] == msg.sender) {
                 hasApproved = true;
             }
         }
-        
+
         require(!hasApproved);
 
         request.approvers.push(msg.sender);
         request.approvalCount++;
     }
 
-    function finalizeRequest(uint _campaignIdx, uint _reqIdx) public{   
+    function finalizeRequest(uint _campaignIdx, uint _reqIdx) public {
         Campaign storage campaign = campaigns[_campaignIdx];
         Request storage request = campaign.requests[_reqIdx];
 
         require(msg.sender == campaign.owner);
-        
-        require(request.approvalCount > (campaign.donatorsCount/2));
+
+        require(request.approvalCount > (campaign.donatorsCount / 2));
         require(!request.complete);
 
         request.recipient.transfer(request.value);
         request.complete = true;
     }
- 
 }

@@ -40,10 +40,11 @@ const RequestForm = () => {
       ...form,
       amount: ethers.utils.parseUnits(form.amount, 18),
       pId: state.pId,
-      imageUrl: uploadUrl
+      imageUrl: uploadUrl[0]
     });
     setIsLoading(false);
     navigate("/");
+    
   };
 
   return (
